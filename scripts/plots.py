@@ -62,8 +62,11 @@ def _expr_img(X, bins, shape, sf, j, sigma=1.5):
 def _show(ax, img, title, cmap="magma", vmin=0.0, vmax=None):
     cm = plt.get_cmap(cmap).copy()
     cm.set_bad(BG)
+    finite = np.isfinite(img).any()
+    if vmin is None:
+        vmin = float(np.nanpercentile(img, 0.5)) if finite else 0.0
     if vmax is None:
-        vmax = np.nanpercentile(img, 99.5) if np.isfinite(img).any() else 1.0
+        vmax = float(np.nanpercentile(img, 99.5)) if finite else 1.0
     im = ax.imshow(img, cmap=cm, vmin=vmin, vmax=max(vmax, vmin + 1e-9), interpolation="nearest")
     ax.set_title(title, fontsize=8)
     ax.set_xticks([])

@@ -1,0 +1,69 @@
+{
+  "H": 170,
+  "W": 170,
+  "bin_um": 16.0,
+  "compartments": [
+    "Epithelial",
+    "Stroma",
+    "Adipose",
+    "Immune",
+    "Vascular",
+    "SmoothMuscle"
+  ],
+  "n_bins": 20000,
+  "n_genes": 4000,
+  "nnz": 3195957,
+  "config": {
+    "n_bins": 20000,
+    "n_genes": 4000,
+    "bin_um": 16.0,
+    "seed": 2026,
+    "base_logmean_mu": -3.4,
+    "base_logmean_sd": 1.3,
+    "phi": 10.0,
+    "phi_gene_logsd": 0.3,
+    "dropout_a": 2.0,
+    "dropout_b": 8.0,
+    "depth_logsd": 0.35,
+    "technical_depth_gradient": 0.3,
+    "depth_by_type": {
+      "Epithelial": 1.3,
+      "Stroma": 1.0,
+      "Adipose": 0.25,
+      "Immune": 0.9,
+      "Vascular": 0.8,
+      "SmoothMuscle": 0.9
+    },
+    "off_frac_by_type": {
+      "Epithelial": 0.25,
+      "Stroma": 0.3,
+      "Adipose": 0.7,
+      "Immune": 0.35,
+      "Vascular": 0.35,
+      "SmoothMuscle": 0.35
+    },
+    "n_markers_per_type": 150,
+    "marker_effect": [
+      1.0,
+      2.5
+    ],
+    "type_noise_sd": 0.15,
+    "n_modules": 57,
+    "module_size": [
+      20,
+      50
+    ],
+    "n_informative_modules": 5,
+    "informative_noise_frac": 0.2,
+    "n_random_edges": 300,
+    "n_singleton_sv": 200,
+    "n_ctsv": 100,
+    "pattern_probs": {
+      "linear": 0.2,
+      "gaussian": 0.25,
+      "periodic": 0.2,
+      "hotspot": 0.35
+    },
+    "chunk": 128
+  }
+}

@@ -1,0 +1,130 @@
+{
+  "config": {
+    "analysis_unit": "aggregate",
+    "agg_factor": 4,
+    "n_subsample": 30000,
+    "min_detect_frac": 0.01,
+    "n_hvg": 1500,
+    "hvg_subsample": 30000,
+    "alpha_mode": "gene",
+    "kernels": [
+      "linear",
+      "gauss40",
+      "gauss60",
+      "cos40",
+      "cos60"
+    ],
+    "combine": "genewise",
+    "eps_L": 0.001,
+    "eps_smooth": 0.0001,
+    "grad_spike_cap": 10.0,
+    "a_pi": 1.0,
+    "b_pi": 1.0,
+    "a_phi": 10.0,
+    "b_phi": 0.1,
+    "a_gamma": 3.5,
+    "b_gamma": 0.5,
+    "sigma_mu0": 3.0,
+    "sigma_alpha": 3.0,
+    "lambda_quantile": 0.9,
+    "n_iter": 400,
+    "burn_in": 200,
+    "thin": 5,
+    "n_chains": 1,
+    "chain_agreement": 0.8,
+    "bfdr": 0.05,
+    "target_accept": 0.3,
+    "adapt_every": 25,
+    "device": "auto",
+    "seed": 1,
+    "verbose_every": 50
+  },
+  "n_units": 1316,
+  "n_genes": 1500,
+  "n_called": 525,
+  "kernel_weights": [
+    [
+      0.2502771788264486,
+      0.19277436002632423,
+      0.1852945580244256,
+      0.17410297520238616,
+      0.19755092792041543
+    ]
+  ],
+  "kernels": [
+    "linear",
+    "gauss40",
+    "gauss60",
+    "cos40",
+    "cos60"
+  ],
+  "acceptance": {
+    "c0_linear": {
+      "mu0": 0.37984165191650393,
+      "alpha": 0.4248983383178711,
+      "gamma": 0.5310597229003906,
+      "phi": 0.1825,
+      "lam": 0.1825
+    },
+    "c0_gauss40": {
+      "mu0": 0.379293327331543,
+      "alpha": 0.4247022247314453,
+      "gamma": 0.5509639739990234,
+      "phi": 0.16,
+      "lam": 0.1325
+    },
+    "c0_gauss60": {
+      "mu0": 0.3799150085449219,
+      "alpha": 0.4250880432128906,
+      "gamma": 0.5654238891601563,
+      "phi": 0.1875,
+      "lam": 0.1375
+    },
+    "c0_cos40": {
+      "mu0": 0.3798799896240234,
+      "alpha": 0.42528945922851563,
+      "gamma": 0.6017069244384765,
+      "phi": 0.205,
+      "lam": 0.1325
+    },
+    "c0_cos60": {
+      "mu0": 0.38012332916259767,
+      "alpha": 0.4253583145141602,
+      "gamma": 0.5928646469116211,
+      "phi": 0.165,
+      "lam": 0.1525
+    }
+  },
+  "metrics": {
+    "tp": 83,
+    "fp": 431,
+    "fn": 49,
+    "precision": 0.1614785992217899,
+    "recall": 0.6287878787878788,
+    "f1": 0.25696594427244585,
+    "n_true_SV_total": 345,
+    "n_true_SV_analyzed": 132,
+    "recall_vs_all_true_SV": 0.24057971014492754,
+    "call_rate_by_class": {
+      "SV:gaussian": 0.6111111111111112,
+      "SV:hotspot": 0.38235294117647056,
+      "SV:linear": 0.875,
+      "SV:periodic": 0.7391304347826086,
+      "adipose-off (null)": 0.3572984749455338,
+      "ctSV": 0.3333333333333333,
+      "marker (null)": 0.3012658227848101,
+      "null": 0.3076923076923077
+    },
+    "n_by_class": {
+      "null": 481,
+      "adipose-off (null)": 459,
+      "marker (null)": 395,
+      "SV:periodic": 46,
+      "SV:gaussian": 36,
+      "SV:hotspot": 34,
+      "ctSV": 33,
+      "SV:linear": 16
+    }
+  },
+  "runtime_min": 9.433574565251668
+}
