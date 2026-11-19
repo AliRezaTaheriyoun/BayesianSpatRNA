@@ -502,7 +502,7 @@ class NABRChain:
         self.sigma2 = 1.0 / self.rng.gamma(shape, 1.0 / rate)
 
     def update_lambda(self, e):                                               # (h)
-        lo, hi, tau, lam = 0.5 * self.lam_u, self.lam_u, self.tau_lam, self.lam
+        lo, hi, tau, lam = 0.0, self.lam_u, self.tau_lam, self.lam
         prop = float(truncnorm.rvs((lo - lam) / tau, (hi - lam) / tau, loc=lam, scale=tau,
                                    random_state=self.rng))
         beta_old = self.beta_of(self.gamma)

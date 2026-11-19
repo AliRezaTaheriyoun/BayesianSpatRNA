@@ -1,0 +1,78 @@
+{
+  "config": {
+    "analysis_unit": "aggregate",
+    "agg_factor": 2,
+    "n_subsample": 30000,
+    "min_detect_frac": 0.0,
+    "n_hvg": null,
+    "hvg_subsample": 30000,
+    "alpha_mode": "shared",
+    "kernels": [
+      "linear"
+    ],
+    "combine": "paper",
+    "eps_L": 0.001,
+    "eps_smooth": 0.0001,
+    "grad_spike_cap": 10.0,
+    "a_pi": 1.0,
+    "b_pi": 1.0,
+    "a_phi": 10.0,
+    "b_phi": 0.1,
+    "a_gamma": 3.5,
+    "b_gamma": 0.5,
+    "sigma_mu0": 3.0,
+    "sigma_alpha": 3.0,
+    "lambda_quantile": 0.9,
+    "n_iter": 1000,
+    "burn_in": 500,
+    "thin": 5,
+    "n_chains": 1,
+    "chain_agreement": 0.8,
+    "bfdr": 0.05,
+    "target_accept": 0.3,
+    "adapt_every": 25,
+    "device": "auto",
+    "seed": 1,
+    "verbose_every": 50
+  },
+  "n_units": 1024,
+  "n_genes": 5000,
+  "n_called": 590,
+  "kernel_weights": [
+    [
+      1.0
+    ]
+  ],
+  "kernels": [
+    "linear"
+  ],
+  "acceptance": {
+    "c0_linear": {
+      "mu0": 0.2556049957275391,
+      "alpha": 0.27933334350585937,
+      "gamma": 0.24807000732421874,
+      "phi": 0.211,
+      "lam": 0.173
+    }
+  },
+  "metrics": {
+    "tp": 500,
+    "fp": 90,
+    "fn": 0,
+    "precision": 0.847457627118644,
+    "recall": 1.0,
+    "f1": 0.9174311926605504,
+    "n_true_SV_total": 500,
+    "n_true_SV_analyzed": 500,
+    "recall_vs_all_true_SV": 1.0,
+    "call_rate_by_class": {
+      "SV:linear": 1.0,
+      "null": 0.02
+    },
+    "n_by_class": {
+      "null": 4500,
+      "SV:linear": 500
+    }
+  },
+  "runtime_min": 16.258509798844656
+}

@@ -1,0 +1,36 @@
+{
+  "H": 20,
+  "W": 20,
+  "bin_um": 100.0,
+  "compartments": [
+    "Epithelial",
+    "Stroma",
+    "Adipose",
+    "Immune",
+    "Vascular",
+    "SmoothMuscle"
+  ],
+  "n_bins": 400,
+  "n_genes": 1000,
+  "nnz": 295457,
+  "kind": "paper_replication",
+  "config": {
+    "side": 20,
+    "n_subnets": 20,
+    "subnet_size": 50,
+    "n_informative": 2,
+    "pattern": "linear",
+    "network": "star",
+    "dropout": 0.1,
+    "strength": "large",
+    "phi": 10.0,
+    "mu0_mean": 2.0,
+    "mu0_sd": 0.5,
+    "alpha_sd": 3.5,
+    "coord_scale": "standardized",
+    "layout": "vbands",
+    "ba_m": 1,
+    "eta_max": 12.0,
+    "seed": 2026
+  }
+}
