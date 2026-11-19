@@ -1,0 +1,11 @@
+\begin{tabular}{c c l r r r r r r}
+\toprule
+Run & $\rho$ & Setting & Called & Prec. & Recall & F1 & AUC$_{\mathrm{PIP}}$ & AUC$_{|\hat\beta|}$ \\
+\midrule
+A & on & 5 kernels, 2 chains & 673 & 0.08 & 0.42 & 0.14 & 0.505 & 0.625 \\
+B & on & linear kernel, 1 chain & 859 & 0.09 & 0.55 & 0.15 & 0.507 & 0.569 \\
+C & off & linear kernel, 1 chain & 785 & 0.14 & 0.83 & 0.25 & 0.734 & 0.760 \\
+D & off & 5 kernels, gene-wise weights & 525 & 0.16 & 0.63 & 0.26 & 0.705 & 0.837 \\
+E & off & as D, with $\lambda \geq 0.5\,\lambda_u$ & 300 & 0.23 & 0.51 & 0.32 & 0.732 & 0.809 \\
+\bottomrule
+\end{tabular}

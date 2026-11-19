@@ -1,0 +1,363 @@
+% slides.tex -- lab meeting deck (about 20 slides + backup, ~30 min)
+% Build:  python make_slide_assets.py   (from the scripts folder)
+%         cd slides && pdflatex slides.tex && pdflatex slides.tex
+% Numbers in the text come from tables/numbers.tex via \res{...}; '??' means a run folder was missing.
+\documentclass[aspectratio=169,11pt]{beamer}
+\usetheme{Madrid}
+\setbeamertemplate{navigation symbols}{}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,booktabs,graphicx}
+
+\makeatletter
+\newcommand{\res}[1]{\@ifundefined{res@#1}{\textbf{??}}{\@nameuse{res@#1}}}
+\makeatother
+\newcommand{\safeinput}[1]{\IfFileExists{#1}{\input{#1}}{\fbox{\footnotesize missing: \texttt{\detokenize{#1}}}}}
+\newcommand{\safegraphic}[2]{\IfFileExists{#2}{\includegraphics[#1]{#2}}{\fbox{\parbox{0.5\linewidth}{\centering\footnotesize missing: \texttt{\detokenize{#2}}}}}}
+\IfFileExists{tables/numbers.tex}{\input{tables/numbers.tex}}{}
+
+\title[NABR for spatially variable genes]{Network-assisted Bayesian detection of spatially variable genes}
+\subtitle{Implementation, synthetic benchmark, and partial replication of Wu et al.\ (2025, \emph{AOAS})}
+\author{Alireza}   % <-- edit
+\institute{Lab meeting}
+\date{\today}
+
+\begin{document}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+\begin{frame}{Outline}
+  \begin{enumerate}
+    \item Problem and method: network-assisted Bayesian regularization (NABR)
+    \item Our implementation
+    \item Synthetic benchmark resembling our data
+    \item Replication on the paper's own simulation design
+    \item Diagnosis, take-home messages, next steps
+  \end{enumerate}
+\end{frame}
+
+% =====================================================================
+\section{Problem and method}
+
+\begin{frame}{The problem}
+  \begin{itemize}
+    \item Binned spatial transcriptomics (16\,$\mu$m bins); the \textbf{bin type is known} for every bin.
+    \item Goal: \textbf{global spatially variable (SV) genes} --- expression that varies across the tissue
+          beyond what bin type explains.
+    \item Pitfall: compartments are spatially organized $\Rightarrow$ compartment markers look ``spatial''.
+          Bin type must be adjusted for.
+    \item Counts are sparse, over-dispersed and zero-inflated; genes act in networks.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Method: Wu, Li, Ma \& Wu (2025)}
+  \small Joint identification of spatially variable genes via a network-assisted Bayesian regularization
+  approach. \emph{Ann.\ Appl.\ Stat.} 19(4):2705--2723.
+  \normalsize
+  \begin{enumerate}
+    \item \textbf{ZINB counts + cell-type composition covariates} $\Rightarrow$ corrects composition confounding.
+    \item \textbf{Mean-based spatial effects} with fixed kernels $\Rightarrow$ no $n\times n$ covariance, scalable.
+    \item \textbf{Network-assisted thresholded Gaussian prior} $\Rightarrow$ \emph{joint} (not marginal)
+          selection of SV genes.
+  \end{enumerate}
+  \vspace{2mm}
+  In the paper's 12 simulation scenarios: F1 between 0.91 and 1.00, the highest among SPARK, SPARK-X,
+  SpatialDE, MERINGUE, CTSV and HEARTSVG.
+\end{frame}
+
+\begin{frame}{Model}
+  \begin{align*}
+    Y_{ij} &\sim (1-r_{ij})\,\mathrm{NB}(c_i\mu_{ij},\,\phi) + r_{ij}\,\delta_0,
+           \qquad r_{ij}\sim\mathrm{Bern}(\pi_j)\\[2mm]
+    \log\mu_{ij} &= \mu_{0j} + \beta^{(1)}_j\,\mathcal K(x_{i1}) + \beta^{(2)}_j\,\mathcal K(x_{i2})
+           + \textstyle\sum_{k=1}^{K}\alpha_k\,w_{ik}
+  \end{align*}
+  \begin{itemize}
+    \item $w_{ik}$: cell-type composition of unit $i$ (for us: fraction of bins of type $k$).
+    \item $\mathcal K$: linear, exponential or periodic function of standardized coordinates.
+    \item Gene $j$ is SV $\iff \beta^{(1)}_j\neq0$ or $\beta^{(2)}_j\neq0$.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Prior: sparsity + network}
+  \begin{align*}
+    \boldsymbol\beta &= \boldsymbol\gamma\circ\mathbf 1\{|\boldsymbol\gamma|>\lambda\boldsymbol\rho\},
+    &\boldsymbol\gamma &\sim N\big(\mathbf 0,\ \sigma^2_\gamma(\mathbf L+\varepsilon\mathbf I)^{-1}\big),\\
+    \mathbf L &= \big(\mathrm{sgn}\tilde{\boldsymbol\beta}\,\mathrm{sgn}\tilde{\boldsymbol\beta}^{\top}\big)\circ
+       \big(\mathbf I-\mathbf D^{-1/2}\mathbf A\,\mathbf D^{-1/2}\big),
+    &\rho_j &= \Big(\max_{l\in V_{s(j)}}|\gamma_l|\Big)^{-1/2},
+  \end{align*}
+  \centerline{$\lambda\sim U\big(0,\ q_{0.9}(|\tilde{\boldsymbol\beta}|)\big)$, \quad
+  $\sigma^2_\gamma\sim IG(3.5,\,0.5)$.}
+  \begin{itemize}
+    \item Hard threshold $\Rightarrow$ exact zeros; $\lambda$ acts as the minimal detectable effect.
+    \item Graph Laplacian $\Rightarrow$ connected genes get similar effect magnitudes.
+    \item Group-wise weights $\rho$ lower the threshold in sub-networks that contain a strong gene.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Inference and gene calling}
+  \begin{itemize}
+    \item MCMC: Gibbs ($r_{ij}$, $\sigma^2_\gamma$); Metropolis--Hastings ($\mu_{0j}$, $\alpha$, $\phi$, $\lambda$);
+          preconditioned Crank--Nicolson Langevin ($\boldsymbol\gamma$); deterministic update of $\rho$.
+    \item One run per kernel (linear, 2 exponential, 2 cosine); combined with posterior model probabilities.
+    \item PIP$_j$ = posterior probability that gene $j$ is selected; Bayesian FDR at 0.05.
+    \item 5 chains; genes selected in $\geq 80\%$ of chains are reported.
+  \end{itemize}
+\end{frame}
+
+% =====================================================================
+\section{Implementation}
+
+\begin{frame}{Our implementation}
+  \begin{itemize}
+    \item Python / PyTorch, all MCMC steps (a)--(h) of the paper; CPU or GPU.
+    \item About 1\,s per iteration for 1{,}024 spots $\times$ 5{,}000 genes on a 4-core laptop CPU.
+    \item Pipeline: simulate $\rightarrow$ fit $\rightarrow$ evaluate $\rightarrow$ plot.
+    \item Documented deviations (each switchable):
+      \begin{itemize}
+        \item gene-specific bin-type effects $\alpha_{jk}$ for our data (the paper's shared $\alpha_k$ is used in the replication);
+        \item exact pCN-Langevin acceptance ratio (target and proposal densities);
+        \item kernel columns standardized; $\pi_j$ sampled; proposal tuning only during burn-in.
+      \end{itemize}
+  \end{itemize}
+\end{frame}
+
+% =====================================================================
+\section{Our synthetic benchmark}
+
+\begin{frame}{Synthetic tissue resembling our data}
+  \begin{columns}[T]
+    \begin{column}{0.58\textwidth}
+      \safegraphic{width=\linewidth,height=0.75\textheight,keepaspectratio}{figs/tissue.png}
+    \end{column}
+    \begin{column}{0.40\textwidth}
+      \small
+      \begin{itemize}
+        \item \res{fig-nbins} bins of 16\,$\mu$m, \res{fig-ngenes} genes (shown).
+        \item 6 compartments; adipose has low RNA and $\sim$70\% of genes switched off.
+        \item ZINB counts with gene-specific dispersion and dropout.
+        \item Gene network: star / scale-free modules, singletons, random edges.
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Sequencing depth and detected genes by compartment}
+  \centering
+  \safegraphic{width=\linewidth,height=0.8\textheight,keepaspectratio}{figs/qc.png}
+\end{frame}
+
+\begin{frame}{Ground truth}
+  \centering
+  \safegraphic{width=\linewidth,height=0.62\textheight,keepaspectratio}{figs/truth.png}
+  \small
+  \begin{itemize}
+    \item SV genes: linear, Gaussian, periodic and hotspot patterns, mostly inside network modules.
+    \item Decoys: compartment markers and adipose-off genes (spatially structured but \emph{null});
+          cell-type-specific SV genes (reported separately).
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Results on our synthetic data}
+  \centering
+  \resizebox{\linewidth}{!}{\safeinput{tables/runs_ours.tex}}
+  \vspace{2mm}
+  \small
+  \begin{itemize}
+    \item Fits used a \res{fit-nbins}-bin, \res{fit-ngenes}-gene version; $4\times4$-bin pseudo-spots
+          (\res{B-nunits} units), \res{B-ngenes} highly variable genes; short MCMC (400 iterations).
+    \item BFDR calls are not usable here: precision between \res{A-prec} and \res{E-prec}.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Diagnosis 1: bin-type confounding is not the problem}
+  \centering
+  \safegraphic{width=\linewidth,height=0.62\textheight,keepaspectratio}{figs/callrate.pdf}
+  \small
+  \begin{itemize}
+    \item Null genes are called at similar rates whatever their type (run B: markers \res{B-rate-marker},
+          adipose-off \res{B-rate-adip}, other nulls \res{B-rate-null}).
+    \item Over-calling is generic, not leakage of compartment structure.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Diagnosis 2: ranking is informative, calling is not}
+  \centering
+  \safegraphic{width=\linewidth,height=0.6\textheight,keepaspectratio}{figs/auc_pattern.pdf}
+  \small
+  \begin{itemize}
+    \item Ranking by posterior $|\hat\beta|$ (run D): linear \res{D-aucb-linear}, Gaussian \res{D-aucb-gaussian},
+          periodic \res{D-aucb-periodic}, hotspot \res{D-aucb-hotspot} (hotspots lie outside the kernel family).
+    \item With $\rho$ on (run A) the PIP ranking degrades.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Precision of the top-ranked genes}
+  \centering
+  \safegraphic{width=\linewidth,height=0.78\textheight,keepaspectratio}{figs/topk.pdf}
+\end{frame}
+
+% =====================================================================
+\section{Replication}
+
+\begin{frame}{Replicating the paper's simulation design}
+  \centering
+  \footnotesize
+  \begin{tabular}{p{3.0cm}p{5.2cm}p{5.6cm}}
+    \toprule
+    & Paper design (replicated) & Our design \\
+    \midrule
+    Units analysed & \res{paper-nbins} spots ($32\times32$) & \res{B-nunits} pseudo-spots ($4\times4$ bins) \\
+    Genes analysed & \res{paper-ngenes} (all) & \res{B-ngenes} HVGs of \res{fit-ngenes} \\
+    Counts/gene/unit (median) & \res{paper-cpg} & \res{ours-cpg} \\
+    Bin-type information & Dirichlet compositions, 3 regions & hard labels, 6 irregular compartments \\
+    Cell-type effect & shared $\alpha_k\sim N(0,3.5^2)$ & gene-specific: markers, genes off in adipose \\
+    Spatial patterns & linear (inside the kernel family) & linear, Gaussian, periodic, hotspot \\
+    Network & 100 sub-networks $\times$ 50 genes; all SV in 10 & modules + singletons + random edges;
+              20\% nulls inside SV modules \\
+    Decoys & none & markers, adipose-off, cell-type-specific SV \\
+    \bottomrule
+  \end{tabular}
+\end{frame}
+
+\begin{frame}{Replication data}
+  \centering
+  \safegraphic{width=\linewidth,height=0.45\textheight,keepaspectratio}{figs/paper_design.pdf}
+  \small
+  \begin{itemize}
+    \item Scenario: \res{paper-scen}; \res{paper-nbins} spots $\times$ \res{paper-ngenes} genes;
+          \res{paper-nsv} SV genes in 10 star sub-networks.
+    \item Region layout, coordinate scaling and scale-free generator are not specified in the paper:
+          our choices.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Replication results}
+  \centering
+  \resizebox{\linewidth}{!}{\safeinput{tables/runs_paper.tex}}
+  \vspace{2mm}
+  \small
+  \begin{itemize}
+    \item All \res{F-ntrue} SV genes recovered (recall \res{F-rec}); ranking by $|\hat\beta|$:
+          AUROC \res{F-aucbeta} ($\rho$ on), \res{G-aucbeta} ($\rho$ off).
+    \item Precision \res{F-prec} vs.\ \res{paper-prec} in the paper. \textbf{Partial} replication: one replicate,
+          linear kernel, one chain, 1{,}000 iterations (paper: 50 replicates, 5 kernels $\times$ 5 chains
+          $\times$ 2{,}000 iterations).
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Where are the false positives? Ablation of $\rho$}
+  \centering
+  \safegraphic{width=0.85\linewidth,height=0.55\textheight,keepaspectratio}{figs/hub_ablation.pdf}
+  \small
+  \begin{itemize}
+    \item $\rho$ on: \res{F-nullhub}/\res{F-nnullhub} null hubs and \res{F-nonhub}/\res{F-nnonhub} other nulls called.
+    \item $\rho$ off: \res{G-nullhub}/\res{G-nnullhub} null hubs and \res{G-nonhub}/\res{G-nnonhub} other nulls called.
+    \item $\Rightarrow$ $\rho$ is needed to silence noise in ordinary genes, but promotes the hubs of null star networks.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{A candidate mechanism (hypothesis, not yet tested)}
+  \begin{columns}[T]
+    \begin{column}{0.55\textwidth}
+      \safegraphic{width=\linewidth,height=0.7\textheight,keepaspectratio}{figs/mechanism.pdf}
+    \end{column}
+    \begin{column}{0.43\textwidth}
+      \small
+      If the hub $h$ has the largest $|\gamma|$ in its sub-network, $\rho_h=|\gamma_h|^{-1/2}$, so
+      \[ h \text{ selected} \iff |\gamma_h|>\lambda\rho_h \iff |\gamma_h|>\lambda^{2/3}. \]
+      Observed: $\lambda=\res{F-lam}$, $\lambda^{2/3}=\res{F-lam23}$;
+      called null hubs: median $|\hat\beta|=\res{F-fphub}$.
+      \begin{itemize}
+        \item $\rho$ is recomputed without a likelihood check.
+        \item The Laplacian prior is nearly flat along $\mathbf D^{1/2}\mathbf 1$, where a star hub
+              carries half the weight.
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Network view (replication, $\rho$ on)}
+  \centering
+  \safegraphic{width=\linewidth,height=0.8\textheight,keepaspectratio}{figs/network_paper.png}
+\end{frame}
+
+% =====================================================================
+\section{Conclusions}
+
+\begin{frame}{Take-home messages}
+  \begin{enumerate}
+    \item On the paper's design the implementation recovers \res{F-tp}/\res{F-ntrue} SV genes, with
+          AUROC$_{|\hat\beta|}$ = \res{F-aucbeta}.
+    \item BFDR calls are not yet calibrated (precision \res{F-prec} vs.\ \res{paper-prec});
+          errors concentrate in null star hubs $\Rightarrow$ a specific, testable mechanism.
+    \item $\rho$ is a trade-off: it silences noise in ordinary genes but promotes null hubs.
+    \item On sparse data (median \res{ours-cpg} vs.\ \res{paper-cpg} counts per gene per unit) performance drops
+          sharply; bin-type confounding itself is handled.
+    \item Promising for our data, but not yet validated at Visium-HD-like sparsity.
+  \end{enumerate}
+\end{frame}
+
+\begin{frame}{Recommendations for our data now}
+  \begin{itemize}
+    \item Aggregate bins (32--64\,$\mu$m) to raise counts per analysis unit.
+    \item Rank genes by posterior effect size; treat BFDR calls as provisional.
+    \item Calibrate calls with a permutation null (shuffle coordinates within bin type).
+    \item Benchmark against nnSVG and SPARK-X (bin type as covariate) on the same simulation.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Next steps}
+  \begin{enumerate}
+    \item Full replication: 12 scenarios $\times$ 5 kernels $\times$ 5 chains (HPC CPU array).
+    \item Test the hub mechanism: likelihood-checked $\rho$ update, degree-aware weights.
+    \item Bridge the two designs one factor at a time: counts, gene-specific bin-type effects,
+          kernel mismatch, network noise, hard labels.
+    \item Apply to our real data.
+  \end{enumerate}
+\end{frame}
+
+\begin{frame}
+  \centering \Large Thank you --- questions?
+\end{frame}
+
+% =====================================================================
+\appendix
+
+\begin{frame}{Backup: MCMC traces (replication)}
+  \centering
+  \safegraphic{width=\linewidth,height=0.5\textheight,keepaspectratio}{figs/traces_paper.pdf}
+  \small
+  \begin{itemize}
+    \item $\phi$ converges slowly (shared $\alpha_k$ start at zero) and reaches the true value $\approx 10$
+          only after about 650 iterations.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Backup: replication summary figure ($\rho$ on)}
+  \centering
+  \safegraphic{width=\linewidth,height=0.8\textheight,keepaspectratio}{figs/results_paper.png}
+\end{frame}
+
+\begin{frame}{Backup: gene maps on our data (run D)}
+  \centering
+  \safegraphic{width=\linewidth,height=0.8\textheight,keepaspectratio}{figs/maps_ours.png}
+\end{frame}
+
+\begin{frame}[fragile]{Backup: reproducibility}
+\footnotesize
+\begin{verbatim}
+python main.py --stage all --quick --sim-bins 20000 --sim-genes 4000      # run A
+python debug_norho.py; python debug_norho_all.py; python debug_floor.py   # runs C, D, E
+python sim_paper.py --outdir sim_paper
+python run_replication.py --sim-dir sim_paper --fit-dir fit_paper --kernels linear \
+       --n-chains 1 --n-iter 1000 --burn-in 500 --thin 5                  # run F
+python run_replication.py ... --fit-dir fit_paper_norho --no-rho          # run G
+python make_slide_assets.py; cd slides; pdflatex slides.tex
+\end{verbatim}
+\end{frame}
+
+\end{document}

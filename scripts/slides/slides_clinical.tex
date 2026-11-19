@@ -1,0 +1,295 @@
+% slides_clinical.tex -- clinician-oriented version (~16 main slides + technical backup)
+% Put this file in the slides/ folder (next to figs/ and tables/), then:
+%   pdflatex slides_clinical.tex && pdflatex slides_clinical.tex
+\documentclass[aspectratio=169,11pt]{beamer}
+\usetheme{Madrid}
+\setbeamertemplate{navigation symbols}{}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,booktabs,graphicx}
+
+\makeatletter
+\newcommand{\res}[1]{\@ifundefined{res@#1}{\textbf{??}}{\@nameuse{res@#1}}}
+\makeatother
+\newcommand{\safeinput}[1]{\IfFileExists{#1}{\input{#1}}{\fbox{\footnotesize missing: \texttt{\detokenize{#1}}}}}
+\newcommand{\safegraphic}[2]{\IfFileExists{#2}{\includegraphics[#1]{#2}}{\fbox{\parbox{0.5\linewidth}{\centering\footnotesize missing: \texttt{\detokenize{#2}}}}}}
+\IfFileExists{tables/numbers.tex}{\input{tables/numbers.tex}}{}
+
+\title[Spatially variable genes]{Finding genes with spatial patterns in tissue}
+\subtitle{Testing a new statistical method on simulated tissue before using it on patient samples}
+\author{AliReza Taheriyoun}   % <-- edit
+\institute{Lab meeting}
+\date{\today}
+
+\begin{document}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+\begin{frame}{Today in one slide}
+  \begin{itemize}
+    \item \textbf{Question:} which genes change their activity across a tissue section, beyond simply
+          reflecting which tissue type is where?
+    \item \textbf{Tool:} a new statistical method (Mingcong Wu. Yang Li. Shuangge Ma. Mengyun Wu. "Joint identification of spatially variable genes via a network-assisted Bayesian regularization approach." Ann. Appl. Stat. 19 (4) 2705 - 2723, December 2025.).
+    \item \textbf{What I did:} built simulated tissue with known ground truth, and tested the method.
+    \item \textbf{Result:} it ranks genes very well, but its yes/no calls produce too many false alarms
+          on data as sparse as ours. \textcolor{red}{We know where the false alarms come from.}
+  \end{itemize}
+\end{frame}
+
+% =====================================================================
+\section{Background}
+
+\begin{frame}{Spatial transcriptomics in one picture}
+  \begin{itemize}
+    \item A tissue section is divided into tiny squares (``bins'', 16\,$\mu$m, roughly cell-sized).
+    \item For each bin we count the RNA molecules of $\sim$18{,}000 genes.
+    \item For each bin we also know its \textbf{tissue type}: epithelium, stroma, fat, immune cells, vessels.
+    \item A \textbf{spatially variable gene} is one whose activity forms a pattern across the tissue:
+          a gradient, a hotspot, a band.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{The trap: tissue layout looks like a spatial pattern}
+  \begin{itemize}
+    \item Fat sits in one region of the section, epithelium in others.
+    \item A gene that is active only in fat will therefore \emph{look} spatial but it simply marks fat.
+    \item We want genes whose pattern goes \textbf{beyond} the tissue layout
+          (e.g.\ a gradient \emph{within} stroma).
+    \item The method we tested is designed to correct for tissue type, and it also uses known
+          gene--gene interactions: genes that work together are assessed together.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Why test on simulated tissue first?}
+  \begin{itemize}
+    \item On real samples we do not know which genes are truly spatial.
+    \item In simulated tissue we \textbf{decide the truth}, so we can grade the method (like validating a diagnostic test on samples with a known diagnosis).
+  \end{itemize}
+  \vspace{3mm}
+  \centering
+  \begin{tabular}{ll}
+    \toprule
+    Statistical term & Clinical equivalent \\
+    \midrule
+    Recall & Sensitivity: true spatial genes that are found \\
+    Precision & Positive predictive value (PPV): flagged genes that are truly spatial \\
+    AUROC & Area under the ROC curve: quality of the ranking ({\small 0.5 = coin flip, 1 = perfect}) \\
+    \bottomrule
+  \end{tabular}
+\end{frame}
+
+% =====================================================================
+\section{Simulated tissue}
+
+\begin{frame}{Our simulated tissue, modelled on our data}
+  \begin{columns}[T]
+    \begin{column}{0.58\textwidth}
+      \safegraphic{width=\linewidth,height=0.75\textheight,keepaspectratio}{figs/tissue.png}
+    \end{column}
+    \begin{column}{0.40\textwidth}
+      \small
+      \begin{itemize}
+        \item \res{fig-nbins} bins, \res{fig-ngenes} genes.
+        \item Six tissue types, arranged like a real section.
+        \item Fat lobe on one side, epithelial islands, immune clusters, thin vessels.
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Fat carries much less RNA}
+	\begin{columns}[T]
+		\begin{column}{.7\textwidth}
+			\centering
+			\safegraphic{height=.8\textheight,keepaspectratio}{figs/qc.png}
+		\end{column}
+		\begin{column}{.3\textwidth}
+			\vspace{2cm}Fat bins have far fewer RNA molecules and detected genes; as in real adipose tissue.
+		\end{column}
+	\end{columns}
+\end{frame}
+
+\begin{frame}{The answer key we built in}
+  \centering
+  \safegraphic{width=\linewidth,height=0.62\textheight,keepaspectratio}{figs/truth.png}
+  \small
+  \begin{itemize}
+    \item \textbf{True spatial genes}: gradients, waves, hotspots (top row).
+    \item \textbf{Decoys}: tissue-type markers that only \emph{look} spatial. These should \emph{not} be flagged and we treat them as \textcolor{red}{false positive}.
+  \end{itemize}
+\end{frame}
+
+% =====================================================================
+\section{Results}
+
+\begin{frame}{Result 1: too many false alarms on data like ours}
+  \begin{itemize}
+    \item As published: sensitivity \res{A-rec}, PPV \res{A-prec}.
+    \item Best version we tried: sensitivity \res{E-rec}, PPV \res{E-prec}.
+    \item In plain words: most genes the method flags are \textbf{not} truly spatial.
+  \end{itemize}
+  \vspace{3mm}
+  \small Fits used a smaller version of the simulated tissue (\res{fit-nbins} bins, \res{fit-ngenes} genes),
+  with neighbouring bins combined into larger squares to boost the signal.
+\end{frame}
+
+\begin{frame}{Result 2: the tissue-type correction works}
+  \centering
+  \safegraphic{width=\linewidth,height=0.6\textheight,keepaspectratio}{figs/callrate.pdf}
+  \small
+  \begin{itemize}
+    \item Decoy markers are flagged no more often than ordinary non-spatial genes
+          (\res{B-rate-marker} vs.\ \res{B-rate-null}).
+    \item So the false alarms are \emph{not} caused by the tissue layout. Bars are different versions of the method.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Result 3: the ranking is useful}
+  \centering
+  \safegraphic{width=\linewidth,height=0.62\textheight,keepaspectratio}{figs/topk.pdf}
+  \small
+  \begin{itemize}
+    \item Left: our data. The genes ranked at the very top are almost all truly spatial;
+          accuracy falls further down the list (overall AUROC \res{D-aucb-ALL}).
+    \item Right: the authors' simulation design, where the ranking is close to perfect.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Result 4: on the authors' own simulation design}
+  \begin{itemize}
+    \item We rebuilt the simulation described in the paper and ran our implementation on it.
+    \item \textbf{All} \res{F-ntrue} truly spatial genes found (sensitivity \res{F-rec}).
+    \item Ranking almost perfect: AUROC \res{F-aucbeta}.
+    \item PPV \res{F-prec}; the authors report \res{paper-prec} with longer, repeated runs that we could
+          not do on a laptop.
+  \end{itemize}
+  \vspace{3mm}
+  $\Rightarrow$ The method works as described. The problems appear on data like ours.
+\end{frame}
+
+\begin{frame}{Why the difference? Two reasons}
+  \begin{enumerate}
+    \item \textbf{Our data are much sparser.} Median reads per gene per location:
+          \res{paper-cpg} in the authors' design vs.\ \res{ours-cpg} in ours ---
+          like running a test on a much smaller sample.
+    \item \textbf{One specific weak spot.} Most remaining false alarms on the authors' design
+          (\res{F-nullhub} of \res{F-fp}) are ``hub'' genes --- genes with many connections in the
+          gene network. This points to one step of the method that we can fix.
+  \end{enumerate}
+\end{frame}
+
+% =====================================================================
+\section{Conclusions}
+
+\begin{frame}{Take-home messages}
+  \begin{enumerate}
+    \item The method correctly accounts for tissue type --- the main pitfall for our question.
+    \item It ranks genes well, especially on data with enough signal.
+    \item Its automatic yes/no calls are not yet reliable on data as sparse as ours.
+    \item We have identified concrete causes (sparsity, hub genes) and how to address them.
+  \end{enumerate}
+\end{frame}
+
+\begin{frame}{What this means for our samples}
+  \begin{itemize}
+    \item \textbf{Combine neighbouring bins} into larger squares to increase the signal.
+    \item \textbf{Use the ranking}, not the automatic yes/no calls; follow up the top genes.
+    \item \textbf{Add a calibration step} that estimates how many flagged genes are false alarms.
+    \item \textbf{Compare} with established tools on the same simulated tissue before analysing patient samples.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \centering \Large Thank you --- questions?
+\end{frame}
+
+% =====================================================================
+\appendix
+
+\begin{frame}{Backup: the statistical model}
+  \begin{align*}
+    Y_{ij} &\sim (1-r_{ij})\,\mathrm{NB}(c_i\mu_{ij},\,\phi) + r_{ij}\,\delta_0,
+           \qquad r_{ij}\sim\mathrm{Bern}(\pi_j)\\[2mm]
+    \log\mu_{ij} &= \mu_{0j} + \beta^{(1)}_j\,\mathcal K(x_{i1}) + \beta^{(2)}_j\,\mathcal K(x_{i2})
+           + \textstyle\sum_{k=1}^{K}\alpha_k\,w_{ik}
+  \end{align*}
+  \begin{itemize}
+    \item $w_{ik}$: tissue-type composition; $\mathcal K$: linear, exponential or periodic kernel.
+    \item Gene $j$ is spatially variable $\iff \beta^{(1)}_j\neq0$ or $\beta^{(2)}_j\neq0$.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Backup: prior and inference}
+  \begin{align*}
+    \boldsymbol\beta &= \boldsymbol\gamma\circ\mathbf 1\{|\boldsymbol\gamma|>\lambda\boldsymbol\rho\},
+    &\boldsymbol\gamma &\sim N\big(\mathbf 0,\ \sigma^2_\gamma(\mathbf L+\varepsilon\mathbf I)^{-1}\big),
+    &\rho_j &= \Big(\max_{l\in V_{s(j)}}|\gamma_l|\Big)^{-1/2}
+  \end{align*}
+  \small
+  \begin{itemize}
+    \item $\mathbf L$: signed, normalized graph Laplacian of the gene network.
+    \item MCMC (Gibbs, Metropolis--Hastings, pCN-Langevin); 5 kernels combined; Bayesian FDR 0.05;
+          5 chains, genes kept if selected in $\geq80\%$.
+    \item Our implementation: Python/PyTorch, about 1\,s per iteration for 1{,}024 spots $\times$ 5{,}000 genes on a laptop CPU.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Backup: all runs on our simulated data}
+  \centering
+  \resizebox{\linewidth}{!}{\safeinput{tables/runs_ours.tex}}
+  \vspace{2mm}
+  \small $\rho$: the method's group-wise weighting step. AUC$_{|\hat\beta|}$: ranking by estimated effect size.
+\end{frame}
+
+\begin{frame}{Backup: ranking quality by pattern type}
+  \centering
+  \safegraphic{width=\linewidth,height=0.75\textheight,keepaspectratio}{figs/auc_pattern.pdf}
+\end{frame}
+
+\begin{frame}{Backup: replication of the authors' design}
+  \centering
+  \resizebox{\linewidth}{!}{\safeinput{tables/runs_paper.tex}}
+  \vspace{2mm}
+  \safegraphic{width=0.9\linewidth,height=0.4\textheight,keepaspectratio}{figs/paper_design.pdf}
+\end{frame}
+
+\begin{frame}{Backup: where the false alarms come from}
+  \centering
+  \safegraphic{width=0.85\linewidth,height=0.55\textheight,keepaspectratio}{figs/hub_ablation.pdf}
+  \small
+  \begin{itemize}
+    \item With the weighting step $\rho$: \res{F-nullhub}/\res{F-nnullhub} non-spatial hub genes and
+          \res{F-nonhub}/\res{F-nnonhub} other non-spatial genes flagged.
+    \item Without it: \res{G-nullhub}/\res{G-nnullhub} and \res{G-nonhub}/\res{G-nnonhub}.
+          $\rho$ silences noise in ordinary genes but promotes hubs.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Backup: candidate mechanism (hypothesis)}
+  \begin{columns}[T]
+    \begin{column}{0.55\textwidth}
+      \safegraphic{width=\linewidth,height=0.7\textheight,keepaspectratio}{figs/mechanism.pdf}
+    \end{column}
+    \begin{column}{0.43\textwidth}
+      \small
+      If hub $h$ has the largest $|\gamma|$ in its sub-network, $\rho_h=|\gamma_h|^{-1/2}$, so
+      $h$ is selected $\iff |\gamma_h|>\lambda^{2/3}$.
+      Observed: $\lambda^{2/3}=\res{F-lam23}$; flagged non-spatial hubs have median
+      $|\hat\beta|=\res{F-fphub}$.
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Backup: gene network view (authors' design)}
+  \centering
+  \safegraphic{width=\linewidth,height=0.8\textheight,keepaspectratio}{figs/network_paper.png}
+\end{frame}
+
+\begin{frame}{Backup: MCMC traces}
+  \centering
+  \safegraphic{width=\linewidth,height=0.6\textheight,keepaspectratio}{figs/traces_paper.pdf}
+\end{frame}
+
+\end{document}
