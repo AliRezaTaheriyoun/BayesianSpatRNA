@@ -85,6 +85,11 @@
 \definecolor{SoftGray}{RGB}{245,246,248}
 \definecolor{DarkGray}{RGB}{72,72,72}
 \definecolor{Forest}{RGB}{0,105,92}
+\definecolor{mgtxnavy}{HTML}{193B52}
+\definecolor{mgtxteal}{HTML}{168D91}
+\definecolor{mgtxred}{HTML}{C95D5D}
+\definecolor{mgtxamber}{HTML}{DDA84B}
+
 \hypersetup{pdfpagemode=FullScreen,colorlinks=true,linkcolor=GWBlue,urlcolor=GWBlue}
 \setbeamertemplate{navigation symbols}{}
 \setbeamertemplate{caption}[numbered]
@@ -196,6 +201,418 @@
 \begin{frame}
   \titlepage
 \end{frame}
+% ============================================================
+% SLIDE 2 -- CORRECTED DATA AND INVENTORY
+% ============================================================
+
+\begin{frame}{Why this reprocessing was necessary}
+	
+	\begin{columns}[T]
+		
+		\column{0.5\textwidth}
+		
+		\small
+		
+		\textbf{Sample-identity investigation}
+		
+		\begin{itemize}
+			\item External SNP-based QC raised concerns about
+			sample labeling in the public RNA-seq dataset.
+			
+			\item A corrected-label delivery was prepared
+			on November 17, 2026.
+			
+			\item The delivery documentation describes
+			genotype comparisons using
+			20,721 SNP loci.
+			
+			\item Original sequencing-core deliveries
+			are preserved for traceability.
+		\end{itemize}
+		
+		\vspace{-0.35cm}
+		
+		\begin{block}{Corrected sequencing inventory}
+			\begin{itemize}
+				\item 282 libraries; 93 participants
+				\item 105 corrected labels
+				\item 177 unchanged labels
+				\item 31 previously missing M36 libraries recovered
+			\end{itemize}
+		\end{block}
+		
+		\column{0.55\textwidth}
+		
+		\begin{center}
+			\includegraphics[
+			width=\linewidth,
+			height=0.70\textheight,
+			keepaspectratio
+			]{figs/fig01_inventory.pdf}
+		\end{center}
+		
+	\end{columns}
+	
+	\vspace{0.05cm}
+	
+	{\scriptsize
+		The core's genotype-based reconciliation is documented;
+		independent identity verification within the new pipeline
+		is still pending.
+	}
+	
+\end{frame}
+
+
+% ============================================================
+% SLIDE 3 -- PROCESSING AND QC COMPLETENESS
+% ============================================================
+
+\begin{frame}{Completed preprocessing and quality-control stages}
+	
+	\vspace{0.2cm}
+	
+	\begin{columns}[T]
+		
+		\column{0.48\textwidth}
+		
+		\begin{block}{Data and integrity checks}
+			
+			\begin{itemize}
+				\item 282 paired-end RNA-seq libraries
+				\item 564 FASTQ files transferred
+				\item 564/564 passed gzip-integrity validation
+				\item 282/282 R1/R2 sequence-count pairs concordant
+				\item Four restored V1 R1 files retained with
+				checksum-verification history
+			\end{itemize}
+			
+		\end{block}
+		
+		\column{0.48\textwidth}
+		
+		\begin{block}{Quality-control analyses}
+			
+			\begin{itemize}
+				\item FastQC completed on all 564 FASTQs
+				\item MultiQC integrated all 564 reports
+				\item Eleven FastQC modules summarized
+				\item Per-tile data examined for all 564 files
+				\item Representative original FastQC reports reviewed
+			\end{itemize}
+			
+		\end{block}
+		
+	\end{columns}
+	
+	\vspace{0.2cm}
+	
+	\begin{center}
+		\Large
+		\textcolor{mgtxteal}{
+			\textbf{All 282 libraries passed the initial file-integrity gate}
+		}
+	\end{center}
+	
+	\vspace{0.1cm}
+	
+	\begin{center}
+		\small
+		Median sequencing depth:
+		\textbf{85.3 million read pairs per library}
+	\end{center}
+	
+	\vspace{0.1cm}
+	
+	{\scriptsize
+		These are FASTQ-level technical results.
+		They do not establish mapping quality, mate synchronization,
+		or participant identity.
+	}
+	
+\end{frame}
+
+
+% ============================================================
+% SLIDE 4 -- FASTQC MODULE STATUS
+% ============================================================
+
+\begin{frame}{FastQC: strong base quality, frequent diagnostic flags}
+	
+	\begin{center}
+		\includegraphics[
+		width=0.99\linewidth,
+		height=0.7\textheight,
+		keepaspectratio
+		]{figs/fig02_fastqc_modules.pdf}
+	\end{center}
+	
+	\vspace{-0.4cm}
+	
+	\small
+	\textbf{Key interpretation:}
+	All 564 FASTQs passed per-base quality,
+	per-sequence quality, adapter-content, and N-content checks.
+	
+	\smallskip
+	
+	\textbf{Caution:}
+	Per-tile, nucleotide-composition, GC-content,
+	and duplication flags require contextual interpretation.
+	A FastQC FAIL does not imply that a library is unusable.
+	
+\end{frame}
+
+
+% ============================================================
+% SLIDE 5 -- TILE-QUALITY INVESTIGATION
+% ============================================================
+
+\begin{frame}{High per-tile FAIL rates do not imply widespread damage}
+	
+	\begin{center}
+		\includegraphics[
+		width=0.93\linewidth,
+		height=0.60\textheight,
+		keepaspectratio
+		]{figs/fig03_tile_burden.pdf}
+	\end{center}
+	
+	\vspace{-0.3cm}
+	
+	\begin{itemize}
+		\item \textbf{551/564} FASTQs received per-tile FAIL flags.
+		\item Median fraction of tile/cycle cells below
+		$-5$ Phred: \textbf{0.227\%}.
+		\item 95th percentile: \textbf{0.779\%};
+		maximum: \textbf{3.248\%}.
+	\end{itemize}
+	
+	{\scriptsize
+		The percentages describe tile/cycle measurements,
+		not the percentage of reads affected.
+		More pronounced effects occur in selected runs,
+		especially the R2 files of Data\_Sequencing 4.
+	}
+	
+\end{frame}
+
+
+% ============================================================
+% SLIDE 6 -- GC CONTENT
+% ============================================================
+
+\begin{frame}{GC heterogeneity warrants batch-aware interpretation}
+	
+	\begin{center}
+		\includegraphics[
+		width=0.91\linewidth,
+		height=0.69\textheight,
+		keepaspectratio
+		]{figs/fig04_gc_visits.pdf}
+	\end{center}
+	
+	\vspace{-0.10cm}
+	
+	\small
+	
+	\begin{itemize}
+		\item Overall median FASTQ GC content was
+		approximately \textbf{46\%}.
+		
+		\item MultiQC showed heterogeneous GC distributions,
+		including secondary peaks in some libraries.
+		
+		\item Corrected-label and unchanged-label libraries
+		differ in visit and sequencing-run composition.
+	\end{itemize}
+	
+	\textbf{Interpretation:}
+	Observed GC differences cannot be attributed to
+	sample relabeling itself. STAR alignment and
+	overrepresented-sequence assessment are needed.
+	
+\end{frame}
+
+
+% ============================================================
+% SLIDE 7 -- READ LENGTH AND TECHNICAL SIGNATURES
+% ============================================================
+
+\begin{frame}{Read-length differences indicate batch-specific signatures}
+	
+	\begin{center}
+		\includegraphics[
+		width=0.92\linewidth,
+		height=0.67\textheight,
+		keepaspectratio
+		]{figs/fig05_read_lengths.pdf}
+	\end{center}
+	
+	\vspace{-0.05cm}
+	
+	\small
+	
+	\begin{itemize}
+		\item 416 FASTQs had a reported length range of
+		35--100 bp; 148 had 35--101 bp.
+		
+		\item In the 35--100 bp group, FastQC reported
+		0\% cytosine at the terminal position.
+		
+		\item The source and significance of this signature
+		require review of preprocessing records.
+	\end{itemize}
+	
+	{\scriptsize
+		These are per-file FastQC length ranges, not the
+		distribution of individual read lengths.
+		No library is excluded on this basis.
+	}
+	
+\end{frame}
+
+
+% ============================================================
+% SLIDE 8 -- KEEP VS EXCLUDE DECISION
+% ============================================================
+
+\begin{frame}{Should we exclude libraries before STAR?}
+	
+	\begin{columns}[T]
+		
+		\column{0.49\textwidth}
+		
+		\begin{block}{Option A: Retain all 282 for mapping}
+			
+			\small
+			
+			\textbf{\textcolor{mgtxteal}{Recommended}}
+			
+			\medskip
+			
+			\textbf{Benefits}
+			\begin{itemize}
+				\item Preserves available longitudinal samples
+				\item Avoids selection driven by generic FastQC flags
+				\item Reduces risk of batch-dependent exclusions
+				\item Allows alignment metrics to inform exclusions
+			\end{itemize}
+			
+			\textbf{Costs}
+			\begin{itemize}
+				\item Additional HPC time and storage
+				\item More downstream QC and identity checks
+				\item Some libraries may ultimately be excluded
+			\end{itemize}
+			
+		\end{block}
+		
+		\column{0.49\textwidth}
+		
+		\begin{block}{Option B: Exclude on FastQC FAIL}
+			
+			\small
+			
+			\textbf{\textcolor{mgtxred}{Not recommended}}
+			
+			\medskip
+			
+			\textbf{Potential benefit}
+			\begin{itemize}
+				\item Reduces processing of known poor-quality
+				libraries when defects are substantial
+			\end{itemize}
+			
+			\textbf{Problems in this dataset}
+			\begin{itemize}
+				\item Every library has at least one FastQC FAIL
+				\item A blanket rule would discard all 282 libraries
+				\item Many flags are common or localized
+				\item Exclusions may disproportionately affect
+				specific runs and study visits
+			\end{itemize}
+			
+		\end{block}
+		
+	\end{columns}
+	
+	\vspace{0.16cm}
+	
+	\begin{center}
+		\textbf{
+			Decision: Map all 282 libraries first;
+			decide analysis eligibility after alignment and identity QC.
+		}
+	\end{center}
+	
+\end{frame}
+
+
+% ============================================================
+% SLIDE 9 -- REANALYSIS ROADMAP / PI DECISION
+% ============================================================
+
+\begin{frame}{Next steps and decisions for the MGTX analysis}
+	
+	\begin{enumerate}
+		
+		\item \textbf{STAR alignment of all 282 libraries}
+		
+		\begin{itemize}
+			\item Two-library pilot submitted for resource
+			and mapping validation
+			\item Planned resources: 8 CPUs, 56 GB RAM per job
+			\item Maximum 20 concurrent array tasks
+		\end{itemize}
+		
+		\vspace{0.13cm}
+		
+		\item \textbf{Alignment-based QC}
+		
+		\begin{itemize}
+			\item Uniquely mapped reads and multimapping
+			\item Gene assignment and strand orientation
+			\item Batch-specific mapping differences
+			\item Unusual sequences and possible contamination
+		\end{itemize}
+		
+		\vspace{0.13cm}
+		
+		\item \textbf{Independent longitudinal sample-identity QC}
+		
+		\begin{itemize}
+			\item SNP fingerprints across repeated visits
+			\item Concordance with the documented corrected labels
+			\item Preserve an auditable mapping of identifiers
+		\end{itemize}
+		
+		\vspace{0.13cm}
+		
+		\item \textbf{Clinical linkage and differential expression}
+		
+		\begin{itemize}
+			\item Define the eligible longitudinal analysis subset
+			\item Rerun cpGLMM and relevant sensitivity analyses
+			\item Compare corrected results with previous findings
+		\end{itemize}
+		
+	\end{enumerate}
+	
+	\begin{block}{Proposed decision for PI discussion}
+		Proceed with all 282 technical libraries for initial alignment.
+		Defer exclusion and final manuscript updates until
+		alignment QC and independent identity verification are complete.
+	\end{block}
+	
+\end{frame}
+
+
+
+
+
+
+
 
 \begin{frame}{Today in one slide}
   \begin{itemize}
