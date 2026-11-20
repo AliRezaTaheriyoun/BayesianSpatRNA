@@ -1,11 +1,175 @@
-% slides_clinical.tex -- clinician-oriented version (~16 main slides + technical backup)
-% Put this file in the slides/ folder (next to figs/ and tables/), then:
-%   pdflatex slides_clinical.tex && pdflatex slides_clinical.tex
-\documentclass[aspectratio=169,11pt]{beamer}
-\usetheme{Madrid}
-\setbeamertemplate{navigation symbols}{}
+%% slides_clinical.tex -- clinician-oriented version (~16 main slides + technical backup)
+%% Put this file in the slides/ folder (next to figs/ and tables/), then:
+%%   pdflatex slides_clinical.tex && pdflatex slides_clinical.tex
+%\documentclass[aspectratio=169,11pt]{beamer}
+%\usetheme{Madrid}
+%\setbeamertemplate{navigation symbols}{}
+%\usepackage[T1]{fontenc}
+%\usepackage{lmodern}
+%\usepackage{amsmath,amssymb,booktabs,graphicx}
+%
+%\makeatletter
+%\newcommand{\res}[1]{\@ifundefined{res@#1}{\textbf{??}}{\@nameuse{res@#1}}}
+%\makeatother
+%\newcommand{\safeinput}[1]{\IfFileExists{#1}{\input{#1}}{\fbox{\footnotesize missing: \texttt{\detokenize{#1}}}}}
+%\newcommand{\safegraphic}[2]{\IfFileExists{#2}{\includegraphics[#1]{#2}}{\fbox{\parbox{0.5\linewidth}{\centering\footnotesize missing: \texttt{\detokenize{#2}}}}}}
+%\IfFileExists{tables/numbers.tex}{\input{tables/numbers.tex}}{}
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+
+
+
+
+
+
+
+
+
+
+\documentclass[10pt,aspectratio=169]{beamer}
+
+% -------------------------------------------------------------------------
+% NIH RDI-SIG Workshop talk, revised from JSM LaBay talk
+% Prepared for Ali Reza Taheriyoun, PhD
+% -------------------------------------------------------------------------
+
+\usetheme{CambridgeUS}
+\usecolortheme{dolphin}
+\usefonttheme{professionalfonts}
+\usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb,mathtools,bm}
+\usepackage{booktabs,array,multirow}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{ifthen}
+\usepackage{animate}
+\usepackage{layouts} 
+\usepackage{gensymb}
+\usepackage{lmodern}
+\usepackage{fontawesome5}
+%\usepackage{minted}
+
+% Colors: GW-inspired palette, with NIH-compatible restraint
+\definecolor{GWBlue}{RGB}{0,59,92}
+\definecolor{GWGold}{RGB}{168,153,104}
+\definecolor{DeepRed}{RGB}{170,35,35}
+\definecolor{SoftGray}{RGB}{245,246,248}
+\definecolor{DarkGray}{RGB}{72,72,72}
+\definecolor{Forest}{RGB}{0,105,92}
+\hypersetup{pdfpagemode=FullScreen,colorlinks=true,linkcolor=GWBlue,urlcolor=GWBlue}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{caption}[numbered]
+
+
+\lstdefinestyle{Rstyle}{
+	language=R,
+	% Background & frame
+	backgroundcolor=\color{GWBlue!92!black},
+	frame=none,
+	% Fonts
+	basicstyle=\ttfamily\footnotesize\color{white},
+	% Syntax colors
+	keywordstyle=\color{GWGold}\bfseries,
+	stringstyle=\color{green!60!white},
+	commentstyle=\color{gray!60}\itshape,
+	identifierstyle=\color{white},
+	% Line numbers
+	numbers=left,
+	numberstyle=\tiny\color{GWGold!60},
+	numbersep=8pt,
+	stepnumber=1,
+	% Layout
+	showstringspaces=false,
+	breaklines=true,
+	breakatwhitespace=true,
+	tabsize=2,
+	xleftmargin=14pt,
+	xrightmargin=4pt,
+	aboveskip=6pt,
+	belowskip=2pt,
+	% R keywords
+	morekeywords={TRUE,FALSE,NULL,NA,Inf,NaN,
+		library,require,source,
+		function,if,else,for,while,repeat,
+		return,next,break},
+	% Operator highlighting
+	literate=
+	{<-}{{\color{GWGold!80}<-}}2
+	{->}{{\color{GWGold!80}->}}2
+	{==}{{\color{GWGold!80}==}}2
+	{!=}{{\color{GWGold!80}!=}}2
+	{>=}{{\color{GWGold!80}>=}}2
+	{<=}{{\color{GWGold!80}<=}}2
+	{\%in\%}{{\color{GWGold!80}\%in\%}}5
+	{\%>\%}{{\color{GWGold!80}\%>\%}}3,
+}
+\setbeamercolor*{palette primary}{bg=GWBlue, fg=white}
+\setbeamercolor*{palette secondary}{bg=GWGold, fg=black}
+\setbeamercolor*{palette tertiary}{bg=GWBlue, fg=white}
+\setbeamercolor*{titlelike}{fg=GWBlue}
+\setbeamercolor*{title}{bg=GWBlue, fg=white}
+\setbeamercolor*{frametitle}{fg=GWBlue,bg=white}
+\setbeamercolor*{item}{fg=DeepRed}
+\setbeamercolor*{block title}{bg=GWBlue,fg=white}
+\setbeamercolor*{block body}{bg=SoftGray,fg=black}
+\setbeamercolor*{alerted text}{fg=DeepRed}
+
+\setbeamerfont{title}{size=\Large,series=\bfseries}
+\setbeamerfont{subtitle}{size=\normalsize}
+\setbeamerfont{author}{size=\normalsize}
+\setbeamerfont{institute}{size=\small}
+\setbeamerfont{date}{size=\small}
+\setbeamerfont{frametitle}{size=\large,series=\bfseries}
+\setbeamerfont{footnote}{size=\tiny}
+
+\newcommand{\LaBay}{\texttt{LaBay}}
+\newcommand{\cpGLMM}{\texttt{cpGLMM}}
+\newcommand{\MGTX}{\textsc{MGTX}}
+\newcommand{\Pred}{\mathrm{Pred}}
+\newcommand{\ETTX}{\mathrm{ETTX}}
+\newcommand{\source}[1]{\vspace{1mm}\par{\tiny\color{DarkGray}Source: #1}}
+\newcommand{\speaker}[1]{\par{\tiny\color{DarkGray}\textbf{Speaker note.} #1}}
+\newcommand{\takehome}[1]{\begin{block}{Take-home}\small #1\end{block}}
+
+% Placeholder-safe figure macro: compile even when the original figures folder is absent.
+\newcommand{\maybefig}[3]{%
+	\IfFileExists{#1}{\includegraphics[#2]{#1}}{%
+		\fbox{\begin{minipage}[c][#3][c]{0.94\linewidth}\centering\small\color{DarkGray}
+				Placeholder for figure: \texttt{#1}\\[-1mm]
+				\scriptsize Insert the corresponding manuscript/JSM figure here if available.
+		\end{minipage}}%
+	}%
+}
+
 \usepackage{amsmath,amssymb,booktabs,graphicx}
 
 \makeatletter
@@ -17,9 +181,15 @@
 
 \title[Spatially variable genes]{Finding genes with spatial patterns in tissue}
 \subtitle{Testing a new statistical method on simulated tissue before using it on patient samples}
-\author{AliReza Taheriyoun}   % <-- edit
-\institute{Lab meeting}
-\date{\today}
+\author[AliReza Taheriyoun]{Ali R Taheriyoun, PhD}
+\institute[GWU CBI]{Milken Institute School of Public Health, The George Washington University}
+\date[\today]{Drs. Kaminski and Kusner Lab meeting}
+%
+%\title[Spatially variable genes]{Finding genes with spatial patterns in tissue}
+%\subtitle{Testing a new statistical method on simulated tissue before using it on patient samples}
+%\author{AliReza Taheriyoun}   % <-- edit
+%\institute{Lab meeting}
+%\date{\today}
 
 \begin{document}
 
